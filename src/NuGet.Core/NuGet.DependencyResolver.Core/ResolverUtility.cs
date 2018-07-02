@@ -55,6 +55,7 @@ namespace NuGet.DependencyResolver
                     context.RemoteLibraryProviders,
                     context.LocalLibraryProviders,
                     context.ProjectLibraryProviders,
+                    context.LockFileLibraries,
                     currentCacheContext,
                     context.Logger,
                     cancellationToken);
@@ -164,6 +165,7 @@ namespace NuGet.DependencyResolver
             IEnumerable<IRemoteDependencyProvider> remoteProviders,
             IEnumerable<IRemoteDependencyProvider> localProviders,
             IEnumerable<IDependencyProvider> projectProviders,
+            IDictionary<NuGetFramework, IList<LibraryIdentity>> lockFileLibraries,
             SourceCacheContext cacheContext,
             ILogger logger,
             CancellationToken cancellationToken)
@@ -184,6 +186,34 @@ namespace NuGet.DependencyResolver
             if (!libraryRange.TypeConstraintAllows(LibraryDependencyTarget.Package))
             {
                 return null;
+            }
+
+            var key = framework;
+
+            if (framework is AssetTargetFallbackFramework)
+            {
+                key = (framework as AssetTargetFallbackFramework).RootFramework;
+            }
+
+            // This is only applicable when packages has be resolved from packages.lock.json file
+            if (lockFileLibraries.TryGetValue(key, out var libraries))
+            {
+                var library = libraries.First(lib => PathUtility.GetStringComparerBasedOnOS().Equals(lib.Name, libraryRange.Name));
+
+                // check for the exact library through local repositories
+                var localMatch = await FindLibraryByVersionAsync(library, framework, localProviders, cacheContext, logger, cancellationToken);
+
+                if (localMatch != null)
+                {
+                    return localMatch;
+                }
+
+                // if not found in local repositories, then check the remote repositories
+                var remoteMatch = await FindLibraryByVersionAsync(libraryRange, framework, remoteProviders, cacheContext, logger, cancellationToken);
+
+                // either found or not, we must return from here since we dont want to resolve to any other version
+                // then defined in packages.lock.json file
+                return remoteMatch;
             }
 
             if (libraryRange.VersionRange.IsFloating)

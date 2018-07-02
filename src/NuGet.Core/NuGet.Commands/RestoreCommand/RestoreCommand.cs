@@ -14,9 +14,12 @@ using NuGet.Common;
 using NuGet.DependencyResolver;
 using NuGet.Frameworks;
 using NuGet.LibraryModel;
+using NuGet.Packaging;
+using NuGet.Packaging.Core;
 using NuGet.ProjectModel;
 using NuGet.Repositories;
 using NuGet.RuntimeModel;
+using NuGet.Shared;
 using NuGet.Versioning;
 
 namespace NuGet.Commands
@@ -104,13 +107,16 @@ namespace NuGet.Commands
                 var contextForProject = CreateRemoteWalkContext(_request, _logger);
 
                 CacheFile cacheFile = null;
+                DependencyGraphSpec dgSpec = null;
                 using (var noOpTelemetry = TelemetryActivity.CreateTelemetryActivityWithNewOperationIdAndEvent(parentId: _operationId, eventName: RestoreNoOpInformation))
                 {
                     if (NoOpRestoreUtilities.IsNoOpSupported(_request))
                     {
                         noOpTelemetry.StartIntervalMeasure();
 
-                        var cacheFileAndStatus = EvaluateCacheFile();
+                        dgSpec = NoOpRestoreUtilities.GetDGSpec(_request);
+
+                        var cacheFileAndStatus = EvaluateCacheFile(dgSpec);
 
                         noOpTelemetry.EndIntervalMeasure(CacheFileEvaluateDuration);
 
@@ -145,6 +151,77 @@ namespace NuGet.Commands
                                     _request.ProjectStyle,
                                     restoreTime.Elapsed);
                             }
+                        }
+                    }
+                }
+
+                var nuGetlockFilePath = NuGetLockFileUtilities.GetNuGetLockFilePath(_request.Project);
+                NuGetLockFile nuGetLockFile = null;
+                var restorePackagesWithLockFile = _request.Project.RestoreMetadata.RestorePackagesWithLockFile;
+
+                if (!MSBuildStringUtility.IsTrueOrEmpty(restorePackagesWithLockFile) && File.Exists(nuGetlockFilePath))
+                {
+                    // invalid input since packages.lock.json file exists along with RestorePackagesWithLockFile is set to false.
+                    await _logger.LogAsync(RestoreLogMessage.CreateError(NuGetLogCode.NU1005, Strings.Error_InvalidLockFileInput));
+
+                    return new RestoreResult(
+                                success: false,
+                                restoreGraphs: null,
+                                compatibilityCheckResults: new List<CompatibilityCheckResult>(),
+                                msbuildFiles: new List<MSBuildOutputFile>(),
+                                lockFile: _request.ExistingLockFile,
+                                previousLockFile: _request.ExistingLockFile,
+                                lockFilePath: _request.ExistingLockFile.Path,
+                                cacheFile: null,
+                                cacheFilePath: null,
+                                nuGetLockFilePath: nuGetlockFilePath,
+                                nuGetLockFile: nuGetLockFile,
+                                projectStyle: _request.ProjectStyle,
+                                elapsedTime: restoreTime.Elapsed);
+                }
+
+                // read nuget.lock.json file if exists
+                if (File.Exists(nuGetlockFilePath))
+                {
+                    nuGetLockFile = NuGetLockFileFormat.Read(nuGetlockFilePath, _logger);
+
+                    if (dgSpec != null && nuGetLockFile.Targets.Count > 0)
+                    {
+                        // check if lock file is out of sync with project data
+                        if (NuGetLockFileUtilities.IsLockFileStillValid(dgSpec, nuGetLockFile))
+                        {
+                            // pass lock file details down to generate restore graph
+                            foreach (var target in nuGetLockFile.Targets)
+                            {
+                                var libraries = target.Dependencies
+                                    .Where(dep => dep.Type != PackageInstallationType.Project)
+                                    .Select(dep => new LibraryIdentity(dep.Id, dep.ResolvedVersion, LibraryType.Package))
+                                    .ToList();
+
+                                // add lock file libraries into RemoteWalkContext so that it can be used during restore graph generation
+                                contextForProject.LockFileLibraries.Add(target.TargetFramework, libraries);
+                            }
+                        }
+                        else if (_request.Project.RestoreMetadata.FreezeLockFileOnRestore)
+                        {
+                            // bail restore since it's the locked mode but required to update the lock file.
+                            _success = false;
+                            await _logger.LogAsync(RestoreLogMessage.CreateError(NuGetLogCode.NU1004, Strings.Error_RestoreInLockedMode));
+
+                            return new RestoreResult(
+                                success: _success,
+                                restoreGraphs: null,
+                                compatibilityCheckResults: new List<CompatibilityCheckResult>(),
+                                msbuildFiles: new List<MSBuildOutputFile>(),
+                                lockFile: _request.ExistingLockFile,
+                                previousLockFile: _request.ExistingLockFile,
+                                lockFilePath: _request.ExistingLockFile.Path,
+                                cacheFile: null,
+                                cacheFilePath: null,
+                                nuGetLockFilePath: nuGetlockFilePath,
+                                nuGetLockFile: nuGetLockFile,
+                                projectStyle: _request.ProjectStyle,
+                                elapsedTime: restoreTime.Elapsed);
                         }
                     }
                 }
@@ -233,6 +310,16 @@ namespace NuGet.Commands
                     // Revert to the original case if needed
                     await FixCaseForLegacyReaders(graphs, assetsFile, token);
 
+                    // generate packages.lock.json file if enabled
+                    if (NuGetLockFileUtilities.IsNuGetLockFileSupported(_request.Project))
+                    {
+                        nuGetLockFile = new NuGetLockFileBuilder(NuGetLockFileFormat.Version)
+                            .CreateNuGetLockFile(assetsFile);
+
+                        // validate package's SHA512
+                        _success &= ValidatePackages(nuGetLockFile, assetsFile);
+                    }
+
                     // Write the logs into the assets file
                     var logs = _logger.Errors
                         .Select(l => AssetsLogMessage.Create(l))
@@ -276,6 +363,8 @@ namespace NuGet.Commands
                     assetsFilePath,
                     cacheFile,
                     cacheFilePath,
+                    nuGetlockFilePath,
+                    nuGetLockFile,
                     _request.ProjectStyle,
                     restoreTime.Elapsed);
             }
@@ -313,12 +402,36 @@ namespace NuGet.Commands
             return (_request.ExistingLockFile != null && pathComparer.Equals( _request.ExistingLockFile.PackageSpec.FilePath , _request.Project.FilePath));
         }
 
-        private KeyValuePair<CacheFile, bool> EvaluateCacheFile()
+        private bool ValidatePackages(NuGetLockFile lockFile, LockFile assetsFile)
+        {
+            var librariesLookUp = lockFile.Targets
+                .SelectMany(t => t.Dependencies.Where(dep => dep.Type != PackageInstallationType.Project))
+                .Distinct()
+                .ToDictionary(dep => new PackageIdentity(dep.Id, dep.ResolvedVersion), val => val.Sha512);
+
+            foreach (var library in assetsFile.Libraries.Where(lib => lib.Type == LibraryType.Package))
+            {
+                var package = new PackageIdentity(library.Name, library.Version);
+
+                if (!librariesLookUp.TryGetValue(package, out var sha512) || sha512 != library.Sha512)
+                {
+                    // raise validation error
+                    var message = string.Format(CultureInfo.CurrentCulture, Strings.Error_PackageValidationFailed, package.ToString());
+                    _logger.LogAsync(RestoreLogMessage.CreateError(NuGetLogCode.NU1403, message));
+
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private KeyValuePair<CacheFile, bool> EvaluateCacheFile(DependencyGraphSpec dgSpec)
         {
             CacheFile cacheFile;
             var noOp = false;
 
-            var newDgSpecHash = NoOpRestoreUtilities.GetHash(_request);
+            var newDgSpecHash = dgSpec.GetHash();
 
             if (_request.ProjectStyle == ProjectStyle.DotnetCliTool && _request.AllowNoOp)
             {

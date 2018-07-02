@@ -179,6 +179,15 @@ namespace NuGet.Commands {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Invalid input of RestorePackagesWithLockFile property set to false and also exist a packages.lock.json file..
+        /// </summary>
+        internal static string Error_InvalidLockFileInput {
+            get {
+                return ResourceManager.GetString("Error_InvalidLockFileInput", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invalid project-package combination for {0} {1}. DotnetToolReference project style can only contain references of the DotnetTool type.
         /// </summary>
         internal static string Error_InvalidProjectPackageCombo {
@@ -251,6 +260,15 @@ namespace NuGet.Commands {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Package {0} sha512 hash validation failed. Package has been changed since the last restore..
+        /// </summary>
+        internal static string Error_PackageValidationFailed {
+            get {
+                return ResourceManager.GetString("Error_PackageValidationFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to build package. {0}.
         /// </summary>
         internal static string Error_PackFailed {
@@ -283,6 +301,15 @@ namespace NuGet.Commands {
         internal static string Error_ProjectWithIncorrectDependenciesCount {
             get {
                 return ResourceManager.GetString("Error_ProjectWithIncorrectDependenciesCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Packages lock file is inconsistent with project dependencies so restore can&apos;t be run in locked mode. Please disable FreezeLockFileOnRestore MSBuild property or pass explicit --reevaluate flag to run restore to update the lock file..
+        /// </summary>
+        internal static string Error_RestoreInLockedMode {
+            get {
+                return ResourceManager.GetString("Error_RestoreInLockedMode", resourceCulture);
             }
         }
         

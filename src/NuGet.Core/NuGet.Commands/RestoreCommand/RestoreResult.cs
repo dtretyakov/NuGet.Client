@@ -60,10 +60,21 @@ namespace NuGet.Commands
         ///  Cache File. The previous cache file for this project
         /// </summary>
         private CacheFile CacheFile { get; }
+
         /// <summary>
         /// Cache File path. The file path where the cache is written out
         /// </summary>
         protected string CacheFilePath { get;  }
+
+        /// <summary>
+        /// NuGet lock file path
+        /// </summary>
+        public string NuGetLockFilePath { get; }
+
+        /// <summary>
+        /// NuGet lock file which will be used to lock down NuGet packages version
+        /// </summary>
+        public NuGetLockFile NuGetLockFile { get; }
 
         public RestoreResult(
             bool success,
@@ -75,6 +86,8 @@ namespace NuGet.Commands
             string lockFilePath,
             CacheFile cacheFile,
             string cacheFilePath,
+            string nuGetLockFilePath,
+            NuGetLockFile nuGetLockFile,
             ProjectStyle projectStyle,
             TimeSpan elapsedTime)
         {
@@ -87,6 +100,8 @@ namespace NuGet.Commands
             PreviousLockFile = previousLockFile;
             CacheFile = cacheFile;
             CacheFilePath = cacheFilePath;
+            NuGetLockFilePath = nuGetLockFilePath;
+            NuGetLockFile = nuGetLockFile;
             ProjectStyle = projectStyle;
             ElapsedTime = elapsedTime;
         }
@@ -184,6 +199,13 @@ namespace NuGet.Commands
                     FileUtility.Replace(
                         (outputPath) => lockFileFormat.Write(outputPath, result.LockFile),
                         result.LockFilePath);
+
+                    if (NuGetLockFile != null && !string.IsNullOrEmpty(NuGetLockFilePath))
+                    {
+                        FileUtility.Replace(
+                            (outputPath) => NuGetLockFileFormat.Write(outputPath, NuGetLockFile),
+                            NuGetLockFilePath);
+                    }
                 }
             }
             else

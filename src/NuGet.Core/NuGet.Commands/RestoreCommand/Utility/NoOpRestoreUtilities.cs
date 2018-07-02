@@ -196,7 +196,7 @@ namespace NuGet.Commands
         /// This methods handles the deduping of tools
         /// Handles the ignoring of RestoreSettings
         /// </summary>
-        public static string GetHash(RestoreRequest request)
+        public static DependencyGraphSpec GetDGSpec(RestoreRequest request)
         {
             if (request.Project.RestoreMetadata.ProjectStyle == ProjectStyle.DotnetCliTool || request.Project.RestoreMetadata.ProjectStyle == ProjectStyle.PackageReference)
             {
@@ -222,11 +222,11 @@ namespace NuGet.Commands
                 }
 
                 PersistHashedDGFileIfDebugging(dgSpec, request.Log);
-                return dgSpec.GetHash();
+                return dgSpec;
             }
 
             PersistHashedDGFileIfDebugging(request.DependencyGraphSpec, request.Log);
-            return request.DependencyGraphSpec.GetHash();
+            return request.DependencyGraphSpec;
         }
 
 

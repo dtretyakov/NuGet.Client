@@ -23,7 +23,7 @@ namespace NuGet.ProjectModel
         public static readonly string LockFileName = "project.lock.json";
         public static readonly string AssetsFileName = "project.assets.json";
 
-        private static readonly char[] PathSplitChars = new[] { LockFile.DirectorySeparatorChar };
+        public static readonly char[] PathSplitChars = new[] { LockFile.DirectorySeparatorChar };
 
         private const string VersionProperty = "version";
         private const string LibrariesProperty = "libraries";
@@ -630,7 +630,7 @@ namespace NuGet.ProjectModel
                 WriteObject(item.Packages, WritePackageDependency));
         }
 
-        private static PackageDependency ReadPackageDependency(string property, JToken json)
+        public static PackageDependency ReadPackageDependency(string property, JToken json)
         {
             var versionStr = json.Value<string>();
             return new PackageDependency(
@@ -638,7 +638,7 @@ namespace NuGet.ProjectModel
                 versionStr == null ? null : VersionRange.Parse(versionStr));
         }
 
-        private static JProperty WritePackageDependency(PackageDependency item)
+        public static JProperty WritePackageDependency(PackageDependency item)
         {
             return new JProperty(
                 item.Id,
@@ -756,7 +756,7 @@ namespace NuGet.ProjectModel
             return WriteArray(items.Select(f => GetPathWithForwardSlashes(f)), writeItem);
         }
 
-        private static TItem ReadProperty<TItem>(JObject jObject, string propertyName)
+        public static TItem ReadProperty<TItem>(JObject jObject, string propertyName)
         {
             if (jObject != null)
             {
@@ -770,7 +770,7 @@ namespace NuGet.ProjectModel
             return default(TItem);
         }
 
-        private static IList<TItem> ReadObject<TItem>(JObject jObject, Func<string, JToken, TItem> readItem)
+        public static IList<TItem> ReadObject<TItem>(JObject jObject, Func<string, JToken, TItem> readItem)
         {
             if (jObject == null)
             {
@@ -792,7 +792,7 @@ namespace NuGet.ProjectModel
             }
         }
 
-        private static JObject WriteObject<TItem>(IEnumerable<TItem> items, Func<TItem, JProperty> writeItem)
+        public static JObject WriteObject<TItem>(IEnumerable<TItem> items, Func<TItem, JProperty> writeItem)
         {
             var array = new JObject();
             foreach (var item in items)
@@ -812,7 +812,7 @@ namespace NuGet.ProjectModel
             return valueToken.Value<bool>();
         }
 
-        private static int ReadInt(JToken cursor, string property, int defaultValue)
+        public static int ReadInt(JToken cursor, string property, int defaultValue)
         {
             var valueToken = cursor[property];
             if (valueToken == null)
