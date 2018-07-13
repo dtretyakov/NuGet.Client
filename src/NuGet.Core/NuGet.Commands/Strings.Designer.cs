@@ -179,7 +179,7 @@ namespace NuGet.Commands {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invalid input of RestorePackagesWithLockFile property set to false and also exist a packages.lock.json file..
+        ///   Looks up a localized string similar to Invalid restore input where RestorePackagesWithLockFile property is set to false and also exist a packages.lock.json file..
         /// </summary>
         internal static string Error_InvalidLockFileInput {
             get {

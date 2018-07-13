@@ -60,7 +60,7 @@ namespace NuGet.ProjectModel
             }
             catch (Exception ex)
             {
-                log.LogError(string.Format(CultureInfo.CurrentCulture,
+                log.LogWarning(string.Format(CultureInfo.CurrentCulture,
                     Strings.Log_ErrorReadingLockFile,
                     path, ex.Message));
 

@@ -166,7 +166,7 @@ namespace NuGet.Commands
 
                     return new RestoreResult(
                                 success: false,
-                                restoreGraphs: null,
+                                restoreGraphs: new List<RestoreTargetGraph>(),
                                 compatibilityCheckResults: new List<CompatibilityCheckResult>(),
                                 msbuildFiles: new List<MSBuildOutputFile>(),
                                 lockFile: _request.ExistingLockFile,
@@ -180,6 +180,8 @@ namespace NuGet.Commands
                                 elapsedTime: restoreTime.Elapsed);
                 }
 
+                var isLockFileValid = false;
+
                 // read nuget.lock.json file if exists
                 if (File.Exists(nuGetlockFilePath))
                 {
@@ -188,7 +190,8 @@ namespace NuGet.Commands
                     if (dgSpec != null && nuGetLockFile.Targets.Count > 0)
                     {
                         // check if lock file is out of sync with project data
-                        if (NuGetLockFileUtilities.IsLockFileStillValid(dgSpec, nuGetLockFile))
+                        isLockFileValid = NuGetLockFileUtilities.IsLockFileStillValid(dgSpec, nuGetLockFile);
+                        if (isLockFileValid)
                         {
                             // pass lock file details down to generate restore graph
                             foreach (var target in nuGetLockFile.Targets)
@@ -210,7 +213,7 @@ namespace NuGet.Commands
 
                             return new RestoreResult(
                                 success: _success,
-                                restoreGraphs: null,
+                                restoreGraphs: new List<RestoreTargetGraph>(),
                                 compatibilityCheckResults: new List<CompatibilityCheckResult>(),
                                 msbuildFiles: new List<MSBuildOutputFile>(),
                                 lockFile: _request.ExistingLockFile,
@@ -310,14 +313,18 @@ namespace NuGet.Commands
                     // Revert to the original case if needed
                     await FixCaseForLegacyReaders(graphs, assetsFile, token);
 
-                    // generate packages.lock.json file if enabled
-                    if (NuGetLockFileUtilities.IsNuGetLockFileSupported(_request.Project))
+                    // if lock file was still valid then validate package's sha512 hash or else write
+                    // the file if enabled.
+                    if (isLockFileValid)
                     {
-                        nuGetLockFile = new NuGetLockFileBuilder(NuGetLockFileFormat.Version)
-                            .CreateNuGetLockFile(assetsFile);
-
                         // validate package's SHA512
                         _success &= ValidatePackages(nuGetLockFile, assetsFile);
+                    }
+                    else if (NuGetLockFileUtilities.IsNuGetLockFileSupported(_request.Project))
+                    {
+                        // generate packages.lock.json file if enabled
+                        nuGetLockFile = new NuGetLockFileBuilder(NuGetLockFileFormat.Version)
+                            .CreateNuGetLockFile(assetsFile);
                     }
 
                     // Write the logs into the assets file

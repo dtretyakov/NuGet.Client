@@ -711,6 +711,6 @@ For more information, visit http://docs.nuget.org/docs/reference/command-line-re
     <comment>{0} - package id and version</comment>
   </data>
   <data name="Error_InvalidLockFileInput" xml:space="preserve">
-    <value>Invalid input of RestorePackagesWithLockFile property set to false and also exist a packages.lock.json file.</value>
+    <value>Invalid restore input where RestorePackagesWithLockFile property is set to false and also exist a packages.lock.json file.</value>
   </data>
 </root>
