@@ -129,13 +129,8 @@ namespace NuGet.ProjectModel
         private static NuGetLockFileTarget ReadDependency(string property, JToken json)
         {
             var target = new NuGetLockFileTarget();
-            var parts = property.Split(LockFileFormat.PathSplitChars, 2);
-            target.TargetFramework = NuGetFramework.Parse(parts[0]);
-            if (parts.Length == 2)
-            {
-                target.RuntimeIdentifier = parts[1];
-            }
 
+            target.TargetFramework = NuGetFramework.Parse(property);
             target.Dependencies = LockFileFormat.ReadObject(json as JObject, ReadTargetDependency);
 
             return target;

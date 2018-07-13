@@ -50,7 +50,7 @@ namespace NuGet.ProjectModel
                 {
                     var directDependencies = target.Dependencies.Where(dep => dep.Type == PackageInstallationType.Direct);
 
-                    if (IsProjectDependencyChanged(framework.Dependencies, directDependencies))
+                    if (HasProjectDependencyChanged(framework.Dependencies, directDependencies))
                     {
                         // lock file is out of sync
                         return false;
@@ -77,7 +77,7 @@ namespace NuGet.ProjectModel
                             dep => dep.Type == PackageInstallationType.Project &&
                             PathUtility.GetStringComparerBasedOnOS().Equals(dep.Id, p2p.RestoreMetadata.ProjectName));
 
-                        if (IsP2PDependencyChanged(framework.Dependencies, projectDependency))
+                        if (HasP2PDependencyChanged(framework.Dependencies, projectDependency))
                         {
                             // lock file is out of sync
                             return false;
@@ -89,7 +89,7 @@ namespace NuGet.ProjectModel
             return true;
         }
 
-        private static bool IsProjectDependencyChanged(IEnumerable<LibraryDependency> newDependencies, IEnumerable<LockFileDependency> lockFileDependencies)
+        private static bool HasProjectDependencyChanged(IEnumerable<LibraryDependency> newDependencies, IEnumerable<LockFileDependency> lockFileDependencies)
         {
             foreach (var dependency in newDependencies.Where(dep => dep.LibraryRange.TypeConstraint == LibraryDependencyTarget.Package))
             {
@@ -106,7 +106,7 @@ namespace NuGet.ProjectModel
             return false;
         }
 
-        private static bool IsP2PDependencyChanged(IEnumerable<LibraryDependency> newDependencies, LockFileDependency projectDependency)
+        private static bool HasP2PDependencyChanged(IEnumerable<LibraryDependency> newDependencies, LockFileDependency projectDependency)
         {
             if (projectDependency == null)
             {
