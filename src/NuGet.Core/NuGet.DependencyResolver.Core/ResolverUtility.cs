@@ -201,25 +201,32 @@ namespace NuGet.DependencyResolver
 
             var key = new LockFileCacheKey(targetFramework, runtimeIdentifier);
 
-            // This is only applicable when packages has be resolved from packages.lock.json file
+            // This is only applicable when packages has to be resolved from packages.lock.json file
             if (lockFileLibraries.TryGetValue(key, out var libraries))
             {
-                var library = libraries.First(lib => PathUtility.GetStringComparerBasedOnOS().Equals(lib.Name, libraryRange.Name));
+                var library = libraries.FirstOrDefault(lib => PathUtility.GetStringComparerBasedOnOS().Equals(lib.Name, libraryRange.Name));
 
-                // check for the exact library through local repositories
-                var localMatch = await FindLibraryByVersionAsync(library, framework, localProviders, cacheContext, logger, cancellationToken);
-
-                if (localMatch != null)
+                if (library != null)
                 {
-                    return localMatch;
+                    // check for the exact library through local repositories
+                    var localMatch = await FindLibraryByVersionAsync(library, framework, localProviders, cacheContext, logger, cancellationToken);
+
+                    if (localMatch != null)
+                    {
+                        return localMatch;
+                    }
+
+                    // if not found in local repositories, then check the remote repositories
+                    var remoteMatch = await FindLibraryByVersionAsync(libraryRange, framework, remoteProviders, cacheContext, logger, cancellationToken);
+
+                    // either found or not, we must return from here since we dont want to resolve to any other version
+                    // then defined in packages.lock.json file
+                    return remoteMatch;
                 }
 
-                // if not found in local repositories, then check the remote repositories
-                var remoteMatch = await FindLibraryByVersionAsync(libraryRange, framework, remoteProviders, cacheContext, logger, cancellationToken);
-
-                // either found or not, we must return from here since we dont want to resolve to any other version
-                // then defined in packages.lock.json file
-                return remoteMatch;
+                // it should never come to this, but as a fail-safe if it ever fails to resolve a package from lock file when
+                // it has to... then fail restore.
+                return null;
             }
 
             if (libraryRange.VersionRange.IsFloating)

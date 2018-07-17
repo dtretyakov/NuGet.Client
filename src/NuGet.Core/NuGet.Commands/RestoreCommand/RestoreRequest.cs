@@ -164,6 +164,6 @@ namespace NuGet.Commands
 
         public Guid ParentId { get; set;}
 
-        public bool IsRestore { get; set; }
+        public bool IsRestore { get; set; } = true;
     }
 }

@@ -319,6 +319,9 @@ namespace NuGet.Commands
                     {
                         // validate package's SHA512
                         _success &= ValidatePackages(nuGetLockFile, assetsFile);
+
+                        // clear out the existing lock file so that we don't over-write the same file
+                        nuGetLockFile = null;
                     }
                     else if (NuGetLockFileUtilities.IsNuGetLockFileSupported(_request.Project))
                     {

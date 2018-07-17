@@ -40,7 +40,17 @@ namespace NuGet.Commands
                 var framework = assetsFile.PackageSpec.TargetFrameworks.FirstOrDefault(
                     f => EqualityUtility.EqualsWithNullCheck(f.FrameworkName, target.TargetFramework));
 
-                foreach (var library in target.Libraries.Where(e => e.Type == LibraryType.Package))
+                var lilbraries = target.Libraries;
+
+                // check if this is RID-based graph then only add those libraries which differ from original TFM.
+                if (!string.IsNullOrEmpty(target.RuntimeIdentifier))
+                {
+                    var onlyTFM = assetsFile.Targets.First(t => EqualityUtility.EqualsWithNullCheck(t.TargetFramework, target.TargetFramework));
+
+                    lilbraries = target.Libraries.Where(lib => !onlyTFM.Libraries.Any(tfmLib => tfmLib.Equals(lib))).ToList();
+                }
+
+                foreach (var library in lilbraries.Where(e => e.Type == LibraryType.Package))
                 {
                     var identity = new PackageIdentity(library.Name, library.Version);
 
@@ -68,7 +78,7 @@ namespace NuGet.Commands
                     nuGettarget.Dependencies.Add(dependency);
                 }
 
-                foreach (var projectRef in target.Libraries.Where(e => e.Type == LibraryType.Project || e.Type == LibraryType.ExternalProject))
+                foreach (var projectRef in lilbraries.Where(e => e.Type == LibraryType.Project || e.Type == LibraryType.ExternalProject))
                 {
                     var dependency = new LockFileDependency()
                     {
