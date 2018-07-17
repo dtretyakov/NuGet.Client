@@ -29,11 +29,12 @@ namespace NuGet.Commands
             var libraryLookup = assetsFile.Libraries.Where(e => e.Type == LibraryType.Package)
                 .ToDictionary(e => new PackageIdentity(e.Name, e.Version));
 
-            foreach (var target in assetsFile.Targets.Where(target => string.IsNullOrEmpty(target.RuntimeIdentifier)))
+            foreach (var target in assetsFile.Targets)
             {
                 var nuGettarget = new NuGetLockFileTarget()
                 {
                     TargetFramework = target.TargetFramework,
+                    RuntimeIdentifier = target.RuntimeIdentifier
                 };
 
                 var framework = assetsFile.PackageSpec.TargetFrameworks.FirstOrDefault(

@@ -22,6 +22,7 @@ namespace NuGet.DependencyResolver
             ConcurrentDictionary<LibraryRangeCacheKey, Task<GraphItem<RemoteResolveResult>>> cache,
             LibraryRange libraryRange,
             NuGetFramework framework,
+            string runtimeIdentifier,
             GraphEdge<RemoteResolveResult> outerEdge,
             RemoteWalkContext context,
             CancellationToken cancellationToken)
@@ -29,12 +30,13 @@ namespace NuGet.DependencyResolver
             var key = new LibraryRangeCacheKey(libraryRange, framework);
 
             return cache.GetOrAdd(key, (cacheKey) =>
-                FindLibraryEntryAsync(cacheKey.LibraryRange, framework, outerEdge, context, cancellationToken));
+                FindLibraryEntryAsync(cacheKey.LibraryRange, framework, runtimeIdentifier, outerEdge, context, cancellationToken));
         }
 
         public static async Task<GraphItem<RemoteResolveResult>> FindLibraryEntryAsync(
             LibraryRange libraryRange,
             NuGetFramework framework,
+            string runtimeIdentifier,
             GraphEdge<RemoteResolveResult> outerEdge,
             RemoteWalkContext context,
             CancellationToken cancellationToken)
@@ -51,6 +53,7 @@ namespace NuGet.DependencyResolver
                 var match = await FindLibraryMatchAsync(
                     libraryRange,
                     framework,
+                    runtimeIdentifier,
                     outerEdge,
                     context.RemoteLibraryProviders,
                     context.LocalLibraryProviders,
@@ -161,11 +164,12 @@ namespace NuGet.DependencyResolver
         public static async Task<RemoteMatch> FindLibraryMatchAsync(
             LibraryRange libraryRange,
             NuGetFramework framework,
+            string runtimeIdentifier,
             GraphEdge<RemoteResolveResult> outerEdge,
             IEnumerable<IRemoteDependencyProvider> remoteProviders,
             IEnumerable<IRemoteDependencyProvider> localProviders,
             IEnumerable<IDependencyProvider> projectProviders,
-            IDictionary<NuGetFramework, IList<LibraryIdentity>> lockFileLibraries,
+            IDictionary<LockFileCacheKey, IList<LibraryIdentity>> lockFileLibraries,
             SourceCacheContext cacheContext,
             ILogger logger,
             CancellationToken cancellationToken)
@@ -188,12 +192,14 @@ namespace NuGet.DependencyResolver
                 return null;
             }
 
-            var key = framework;
+            var targetFramework = framework;
 
             if (framework is AssetTargetFallbackFramework)
             {
-                key = (framework as AssetTargetFallbackFramework).RootFramework;
+                targetFramework = (framework as AssetTargetFallbackFramework).RootFramework;
             }
+
+            var key = new LockFileCacheKey(targetFramework, runtimeIdentifier);
 
             // This is only applicable when packages has be resolved from packages.lock.json file
             if (lockFileLibraries.TryGetValue(key, out var libraries))

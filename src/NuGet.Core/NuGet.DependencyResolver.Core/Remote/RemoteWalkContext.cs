@@ -36,7 +36,7 @@ namespace NuGet.DependencyResolver
 
             FindLibraryEntryCache = new ConcurrentDictionary<LibraryRangeCacheKey, Task<GraphItem<RemoteResolveResult>>>();
 
-            LockFileLibraries = new Dictionary<NuGetFramework, IList<LibraryIdentity>>();
+            LockFileLibraries = new Dictionary<LockFileCacheKey, IList<LibraryIdentity>>();
         }
 
         public SourceCacheContext CacheContext { get; }
@@ -49,7 +49,7 @@ namespace NuGet.DependencyResolver
         /// <summary>
         /// Packages lock file libraries to be used while generating restore graph.
         /// </summary>
-        public IDictionary<NuGetFramework, IList<LibraryIdentity>> LockFileLibraries { get; }
+        public IDictionary<LockFileCacheKey, IList<LibraryIdentity>> LockFileLibraries { get; }
 
         /// <summary>
         /// Library entry cache.

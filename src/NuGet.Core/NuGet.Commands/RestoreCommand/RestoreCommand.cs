@@ -202,7 +202,7 @@ namespace NuGet.Commands
                                     .ToList();
 
                                 // add lock file libraries into RemoteWalkContext so that it can be used during restore graph generation
-                                contextForProject.LockFileLibraries.Add(target.TargetFramework, libraries);
+                                contextForProject.LockFileLibraries.Add(new LockFileCacheKey(target.TargetFramework, target.RuntimeIdentifier), libraries);
                             }
                         }
                         else if (_request.Project.RestoreMetadata.FreezeLockFileOnRestore)
@@ -413,7 +413,7 @@ namespace NuGet.Commands
         {
             var librariesLookUp = lockFile.Targets
                 .SelectMany(t => t.Dependencies.Where(dep => dep.Type != PackageInstallationType.Project))
-                .Distinct()
+                .Distinct(new LockFileDependencyIdVersionComparer())
                 .ToDictionary(dep => new PackageIdentity(dep.Id, dep.ResolvedVersion), val => val.Sha512);
 
             foreach (var library in assetsFile.Libraries.Where(lib => lib.Type == LibraryType.Package))

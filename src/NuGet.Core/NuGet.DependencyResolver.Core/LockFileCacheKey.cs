@@ -2,39 +2,38 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using NuGet.Frameworks;
 using NuGet.Shared;
 
-namespace NuGet.ProjectModel
+namespace NuGet.DependencyResolver
 {
     /// <summary>
-    /// FrameworkName/RuntimeIdentifier combination
+    /// Helper class to hold lock file libraries per TFM/RID combo.
     /// </summary>
-    public class NuGetLockFileTarget : IEquatable<NuGetLockFileTarget>
+    public class LockFileCacheKey : IEquatable<LockFileCacheKey>
     {
         /// <summary>
         /// Target framework.
         /// </summary>
-        public NuGetFramework TargetFramework { get; set; }
+        public NuGetFramework TargetFramework { get; }
 
         /// <summary>	
         /// Null for RIDless graphs.	
         /// </summary>	
-        public string RuntimeIdentifier { get; set; }
+        public string RuntimeIdentifier { get; }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        public IList<LockFileDependency> Dependencies { get; set; } = new List<LockFileDependency>();
+        public LockFileCacheKey(NuGetFramework framework, string runtimeIdentifier)
+        {
+            TargetFramework = framework;
+            RuntimeIdentifier = runtimeIdentifier;
+        }
 
         /// <summary>
         /// Full framework name.
         /// </summary>
         public string Name => GetNameString(TargetFramework.DotNetFrameworkName, RuntimeIdentifier);
 
-        public bool Equals(NuGetLockFileTarget other)
+        public bool Equals(LockFileCacheKey other)
         {
             if (other == null)
             {
@@ -47,13 +46,12 @@ namespace NuGet.ProjectModel
             }
 
             return StringComparer.Ordinal.Equals(RuntimeIdentifier, other.RuntimeIdentifier)
-                && NuGetFramework.Comparer.Equals(TargetFramework, other.TargetFramework)
-                && EqualityUtility.SequenceEqualWithNullCheck(Dependencies, other.Dependencies);
+                && NuGetFramework.Comparer.Equals(TargetFramework, other.TargetFramework);
         }
 
         public override bool Equals(object obj)
         {
-            return Equals(obj as NuGetLockFileTarget);
+            return Equals(obj as LockFileCacheKey);
         }
 
         public override int GetHashCode()
@@ -62,9 +60,13 @@ namespace NuGet.ProjectModel
 
             combiner.AddObject(TargetFramework);
             combiner.AddObject(RuntimeIdentifier);
-            combiner.AddSequence(Dependencies);
 
             return combiner.CombinedHash;
+        }
+
+        public override string ToString()
+        {
+            return Name;
         }
 
         private static string GetNameString(string framework, string runtime)

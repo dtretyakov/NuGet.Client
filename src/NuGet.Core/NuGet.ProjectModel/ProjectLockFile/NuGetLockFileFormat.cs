@@ -130,7 +130,14 @@ namespace NuGet.ProjectModel
         {
             var target = new NuGetLockFileTarget();
 
-            target.TargetFramework = NuGetFramework.Parse(property);
+            var parts = property.Split(LockFileFormat.PathSplitChars, 2);
+            target.TargetFramework = NuGetFramework.Parse(parts[0]);
+
+            if (parts.Length == 2)
+            {
+                target.RuntimeIdentifier = parts[1];
+            }
+
             target.Dependencies = LockFileFormat.ReadObject(json as JObject, ReadTargetDependency);
 
             return target;
