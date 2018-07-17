@@ -62,6 +62,8 @@ namespace NuGet.Commands
 
         public Guid ParentId { get; set; }
 
+        public bool IsRestore { get; set; } = true;
+
         // Cache directory -> ISettings
         private ConcurrentDictionary<string, ISettings> _settingsCache
             = new ConcurrentDictionary<string, ISettings>(StringComparer.Ordinal);

@@ -205,7 +205,7 @@ namespace NuGet.Commands
                                 contextForProject.LockFileLibraries.Add(new LockFileCacheKey(target.TargetFramework, target.RuntimeIdentifier), libraries);
                             }
                         }
-                        else if (_request.Project.RestoreMetadata.FreezeLockFileOnRestore)
+                        else if (_request.IsRestore && _request.Project.RestoreMetadata.FreezeLockFileOnRestore)
                         {
                             // bail restore since it's the locked mode but required to update the lock file.
                             _success = false;

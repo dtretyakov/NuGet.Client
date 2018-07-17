@@ -155,7 +155,8 @@ namespace NuGet.Commands
                 RestoreOutputPath = project.PackageSpec.RestoreMetadata.ProjectStyle == ProjectStyle.ProjectJson ? rootPath : project.PackageSpec.RestoreMetadata.OutputPath,
                 DependencyGraphSpec = projectDgSpec,
                 MSBuildProjectExtensionsPath = projectPackageSpec.RestoreMetadata.OutputPath,
-                ParentId = restoreArgs.ParentId
+                ParentId = restoreArgs.ParentId,
+                IsRestore = restoreArgs.IsRestore
             };
             
             var restoreLegacyPackagesDirectory = project.PackageSpec?.RestoreMetadata?.LegacyPackagesDirectory

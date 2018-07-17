@@ -55,7 +55,8 @@ namespace NuGet.PackageManagement
                         sources,
                         dgSpec,
                         parentId,
-                        forceRestore);
+                        forceRestore,
+                        isRestore: true);
 
                     var restoreSummaries = await RestoreRunner.RunAsync(restoreContext, token);
 
@@ -99,7 +100,8 @@ namespace NuGet.PackageManagement
                         sources,
                         dgSpec,
                         parentId,
-                        forceRestore: forceRestore);
+                        forceRestore: forceRestore,
+                        isRestore: false);
 
                     var restoreSummaries = await RestoreRunner.RunAsync(restoreContext, token);
 
@@ -166,7 +168,15 @@ namespace NuGet.PackageManagement
                 cacheContextModifier(sourceCacheContext);
 
                 // Settings passed here will be used to populate the restore requests.
-                var restoreContext = GetRestoreContext(context, providerCache, sourceCacheContext, sources, dgFile, parentId, forceRestore: true);
+                var restoreContext = GetRestoreContext(
+                    context,
+                    providerCache,
+                    sourceCacheContext,
+                    sources,
+                    dgFile,
+                    parentId,
+                    forceRestore: true,
+                    isRestore: false);
 
                 var requests = await RestoreRunner.GetRequests(restoreContext);
                 var results = await RestoreRunner.RunWithoutCommit(requests, restoreContext);
@@ -278,7 +288,8 @@ namespace NuGet.PackageManagement
             IEnumerable<SourceRepository> sources,
             DependencyGraphSpec dgFile,
             Guid parentId,
-            bool forceRestore)
+            bool forceRestore,
+            bool isRestore)
         {
             var caching = new CachingSourceProvider(new PackageSourceProvider(context.Settings));
             foreach( var source in sources)
@@ -295,7 +306,8 @@ namespace NuGet.PackageManagement
                 Log = context.Logger,
                 AllowNoOp = !forceRestore,
                 CachingSourceProvider = caching,
-                ParentId = parentId
+                ParentId = parentId,
+                IsRestore = isRestore
             };
 
             return restoreContext;
