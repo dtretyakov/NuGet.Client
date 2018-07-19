@@ -748,6 +748,61 @@ namespace NuGet.PackageManagement.VisualStudio.Test
             }
         }
 
+        [Theory]
+        [InlineData("true", null, false)]
+        [InlineData(null, "packages.A.lock.json", false)]
+        [InlineData("true", null, true)]
+        [InlineData("false", null, false)]
+        public async Task GetPackageSpecsAsync_ReadLockFileSettings(string restorePackagesWithLockFile, string lockFilePath, bool freezeLockFileOnRestore)
+        {
+            // Arrange
+            using (var testDirectory = TestDirectory.Create())
+            {
+                var projectAdapter = CreateProjectAdapter(testDirectory);
+                Mock.Get(projectAdapter)
+                    .Setup(x => x.GetRestorePackagesWithLockFileAsync())
+                    .ReturnsAsync(restorePackagesWithLockFile);
+
+                Mock.Get(projectAdapter)
+                    .Setup(x => x.GetNuGetLockFilePathAsync())
+                    .ReturnsAsync(lockFilePath);
+
+                Mock.Get(projectAdapter)
+                    .Setup(x => x.IsLockFileFreezeOnRestoreAsync())
+                    .ReturnsAsync(freezeLockFileOnRestore);
+
+                var projectServices = new TestProjectSystemServices();
+
+                var testProject = new LegacyPackageReferenceProject(
+                    projectAdapter,
+                    Guid.NewGuid().ToString(),
+                    projectServices,
+                    _threadingService);
+
+                var settings = NullSettings.Instance;
+                var testDependencyGraphCacheContext = new DependencyGraphCacheContext(NullLogger.Instance, settings);
+
+                await _threadingService.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                // Act
+                var packageSpecs = await testProject.GetPackageSpecsAsync(testDependencyGraphCacheContext);
+
+                // Assert
+                Assert.NotNull(packageSpecs);
+                var actualRestoreSpec = packageSpecs.Single();
+                SpecValidationUtility.ValidateProjectSpec(actualRestoreSpec);
+
+                // Assert restorePackagesWithLockFile
+                Assert.Equal(restorePackagesWithLockFile, actualRestoreSpec.RestoreMetadata.RestorePackagesWithLockFile);
+
+                // assert lockFilePath
+                Assert.Equal(lockFilePath, actualRestoreSpec.RestoreMetadata.NuGetLockFilePath);
+
+                // assert freezeLockFileOnRestore
+                Assert.Equal(freezeLockFileOnRestore, actualRestoreSpec.RestoreMetadata.FreezeLockFileOnRestore);
+            }
+        }
+
         private static Mock<IVsProjectAdapter> CreateProjectAdapter()
         {
             var projectAdapter = new Mock<IVsProjectAdapter>();
