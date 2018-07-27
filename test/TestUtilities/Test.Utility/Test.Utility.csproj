@@ -1,4 +1,4 @@
-﻿<Project>
+<Project>
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), 'README.md'))\build\common.props" />
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
 
@@ -18,6 +18,21 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'net46' ">
     <ProjectReference Include="$(NuGetClientsSrcDirectory)NuGet.CommandLine\NuGet.CommandLine.csproj" />
   </ItemGroup>
+
+  <Choose>
+    <When Condition="$(VisualStudioVersion)=='14.0'">
+      <ItemGroup Condition=" '$(TargetFramework)' == 'net46' ">
+        <PackageReference Include="Microsoft.VisualStudio.Shell.14.0" Version="14.2.25123" />
+      </ItemGroup>
+    </When>
+    <When Condition="$(VisualStudioVersion)=='15.0'">
+      <ItemGroup Condition=" '$(TargetFramework)' == 'net46' ">
+        <PackageReference Include="Microsoft.VisualStudio.Shell.15.0" Version="15.0.26201">
+          <PrivateAssets>All</PrivateAssets>
+        </PackageReference>
+      </ItemGroup>
+    </When>
+  </Choose>
 
   <ItemGroup>
     <None Remove="compiler\resources\.signature.p7s" />
@@ -48,21 +63,6 @@
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
   </ItemGroup>
-
-  <Choose>
-    <When Condition="$(VisualStudioVersion)=='14.0'">
-      <ItemGroup Condition=" '$(TargetFramework)' == 'net46' ">
-        <PackageReference Include="Microsoft.VisualStudio.Shell.14.0" Version="14.2.25123" />
-      </ItemGroup>
-    </When>
-    <When Condition="$(VisualStudioVersion)=='15.0'">
-      <ItemGroup Condition=" '$(TargetFramework)' == 'net46' ">
-        <PackageReference Include="Microsoft.VisualStudio.Shell.15.0" Version="15.0.26201">
-          <PrivateAssets>All</PrivateAssets>
-        </PackageReference>
-      </ItemGroup>
-    </When>
-  </Choose>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net46' ">
     <Reference Include="System.Runtime.Serialization" />

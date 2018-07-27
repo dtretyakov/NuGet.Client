@@ -24,6 +24,7 @@ using NuGet.RuntimeModel;
 using NuGet.Test.Utility;
 using NuGet.Versioning;
 using NuGet.VisualStudio;
+using Test.Utility;
 using Test.Utility.Threading;
 using Xunit;
 using Task = System.Threading.Tasks.Task;
@@ -844,77 +845,77 @@ namespace NuGet.PackageManagement.VisualStudio.Test
 
             return projectAdapter.Object;
         }
+    }
 
-        private class TestProjectThreadingService : IVsProjectThreadingService
+    public class TestProjectSystemServices : INuGetProjectServices
+    {
+        public TestProjectSystemServices()
         {
-            public TestProjectThreadingService(JoinableTaskFactory jtf)
-            {
-                JoinableTaskFactory = jtf;
-            }
+            Mock.Get(ReferencesReader)
+                .Setup(x => x.GetProjectReferencesAsync(
+                    It.IsAny<NuGet.Common.ILogger>(), CancellationToken.None))
+                .ReturnsAsync(() => new ProjectRestoreReference[] { });
 
-            public JoinableTaskFactory JoinableTaskFactory { get; }
-
-            public void ExecuteSynchronously(Func<Task> asyncAction)
-            {
-                JoinableTaskFactory.Run(asyncAction);
-            }
-
-            public T ExecuteSynchronously<T>(Func<Task<T>> asyncAction)
-            {
-                return JoinableTaskFactory.Run(asyncAction);
-            }
-
-            public void ThrowIfNotOnUIThread(string callerMemberName)
-            {
-                ThreadHelper.ThrowIfNotOnUIThread(callerMemberName);
-            }
+            Mock.Get(ReferencesReader)
+                .Setup(x => x.GetPackageReferencesAsync(
+                    It.IsAny<NuGetFramework>(), CancellationToken.None))
+                .ReturnsAsync(() => new LibraryDependency[] { });
         }
 
-        private class TestProjectSystemServices : INuGetProjectServices
+        public IProjectBuildProperties BuildProperties { get; } = Mock.Of<IProjectBuildProperties>();
+
+        public IProjectSystemCapabilities Capabilities { get; } = Mock.Of<IProjectSystemCapabilities>();
+
+        public IProjectSystemReferencesReader ReferencesReader { get; } = Mock.Of<IProjectSystemReferencesReader>();
+
+        public IProjectSystemService ProjectSystem { get; } = Mock.Of<IProjectSystemService>();
+
+        public IProjectSystemReferencesService References { get; } = Mock.Of<IProjectSystemReferencesService>();
+
+        public IProjectScriptHostService ScriptService { get; } = Mock.Of<IProjectScriptHostService>();
+
+        public T GetGlobalService<T>() where T : class
         {
-            public TestProjectSystemServices()
-            {
-                Mock.Get(ReferencesReader)
-                    .Setup(x => x.GetProjectReferencesAsync(
-                        It.IsAny<Common.ILogger>(), CancellationToken.None))
-                    .ReturnsAsync(() => new ProjectRestoreReference[] { });
+            throw new NotImplementedException();
+        }
 
-                Mock.Get(ReferencesReader)
-                    .Setup(x => x.GetPackageReferencesAsync(
-                        It.IsAny<NuGetFramework>(), CancellationToken.None))
-                    .ReturnsAsync(() => new LibraryDependency[] { });
-            }
+        public void SetupInstalledPackages(NuGetFramework targetFramework, params LibraryDependency[] dependencies)
+        {
+            Mock.Get(ReferencesReader)
+                .Setup(x => x.GetPackageReferencesAsync(targetFramework, CancellationToken.None))
+                .ReturnsAsync(dependencies.ToList());
+        }
 
-            public IProjectBuildProperties BuildProperties { get; } = Mock.Of<IProjectBuildProperties>();
+        public void SetupProjectDependencies(params ProjectRestoreReference[] dependencies)
+        {
+            Mock.Get(ReferencesReader)
+                .Setup(x => x.GetProjectReferencesAsync(It.IsAny<NuGet.Common.ILogger>(), CancellationToken.None))
+                .ReturnsAsync(dependencies.ToList());
+        }
+    }
 
-            public IProjectSystemCapabilities Capabilities { get; } = Mock.Of<IProjectSystemCapabilities>();
+    public class TestProjectThreadingService : IVsProjectThreadingService
+    {
+        public TestProjectThreadingService(JoinableTaskFactory jtf)
+        {
+            JoinableTaskFactory = jtf;
+        }
 
-            public IProjectSystemReferencesReader ReferencesReader { get; } = Mock.Of<IProjectSystemReferencesReader>();
+        public JoinableTaskFactory JoinableTaskFactory { get; }
 
-            public IProjectSystemService ProjectSystem { get; } = Mock.Of<IProjectSystemService>();
+        public void ExecuteSynchronously(Func<System.Threading.Tasks.Task> asyncAction)
+        {
+            JoinableTaskFactory.Run(asyncAction);
+        }
 
-            public IProjectSystemReferencesService References { get; } = Mock.Of<IProjectSystemReferencesService>();
+        public T ExecuteSynchronously<T>(Func<Task<T>> asyncAction)
+        {
+            return JoinableTaskFactory.Run(asyncAction);
+        }
 
-            public IProjectScriptHostService ScriptService { get; } = Mock.Of<IProjectScriptHostService>();
-
-            public T GetGlobalService<T>() where T : class
-            {
-                throw new NotImplementedException();
-            }
-
-            public void SetupInstalledPackages(NuGetFramework targetFramework, params LibraryDependency[] dependencies)
-            {
-                Mock.Get(ReferencesReader)
-                    .Setup(x => x.GetPackageReferencesAsync(targetFramework, CancellationToken.None))
-                    .ReturnsAsync(dependencies.ToList());
-            }
-
-            public void SetupProjectDependencies(params ProjectRestoreReference[] dependencies)
-            {
-                Mock.Get(ReferencesReader)
-                    .Setup(x => x.GetProjectReferencesAsync(It.IsAny<Common.ILogger>(), CancellationToken.None))
-                    .ReturnsAsync(dependencies.ToList());
-            }
+        public void ThrowIfNotOnUIThread(string callerMemberName)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread(callerMemberName);
         }
     }
 }
