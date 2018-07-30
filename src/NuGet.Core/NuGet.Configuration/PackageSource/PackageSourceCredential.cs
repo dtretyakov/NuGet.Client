@@ -2,14 +2,16 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using NuGet.Shared;
 
 namespace NuGet.Configuration
 {
     /// <summary>
     /// Represents credentials required to authenticate user within package source web requests.
     /// </summary>
-    public class PackageSourceCredential
+    public class PackageSourceCredential : IEquatable<PackageSourceCredential>
     {
         /// <summary>
         /// User name
@@ -118,6 +120,47 @@ namespace NuGet.Configuration
         internal PackageSourceCredential Clone()
         {
             return new PackageSourceCredential(Source, Username, PasswordText, IsPasswordClearText);
+        }
+
+
+        public CredentialsItem AsCredentialsItem()
+        {
+            return new CredentialsItem(Source, Username, PasswordText, IsPasswordClearText);
+        }
+
+        public bool Equals(PackageSourceCredential other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return string.Equals(Source, other.Source, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(Username, other.Username, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(PasswordText, other.PasswordText, StringComparison.OrdinalIgnoreCase) &&
+                IsPasswordClearText == other.IsPasswordClearText;
+        }
+
+        public override bool Equals(object other)
+        {
+            return Equals(other as PackageSourceCredential);
+        }
+
+        public override int GetHashCode()
+        {
+            var combiner = new HashCodeCombiner();
+
+            combiner.AddObject(Source);
+            combiner.AddObject(Username);
+            combiner.AddObject(PasswordText);
+            combiner.AddObject(IsPasswordClearText);
+
+            return combiner.GetHashCode();
         }
     }
 }

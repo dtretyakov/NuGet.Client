@@ -5742,7 +5742,7 @@ namespace NuGet.Test
                 var Settings = new Settings(settingsdir);
                 foreach (var source in sourceRepositoryProvider.GetRepositories())
                 {
-                    Settings.SetValue(ConfigurationConstants.PackageSources, ConfigurationConstants.PackageSources, source.PackageSource.Source);
+                    Settings.SetItemInSection(ConfigurationConstants.PackageSources, source.PackageSource.AsSourceItem());
                 }
 
                 var token = CancellationToken.None;
@@ -5947,7 +5947,7 @@ namespace NuGet.Test
                 var Settings = new Settings(settingsdir);
                 foreach (var source in sourceRepositoryProvider.GetRepositories())
                 {
-                    Settings.SetValue(ConfigurationConstants.PackageSources, ConfigurationConstants.PackageSources, source.PackageSource.Source);
+                    Settings.SetItemInSection(ConfigurationConstants.PackageSources, source.PackageSource.AsSourceItem());
                 }
 
                 var token = CancellationToken.None;
@@ -6623,7 +6623,7 @@ namespace NuGet.Test
                 var Settings = new Settings(settingsdir);
                 foreach (var source in sourceRepositoryProvider.GetRepositories())
                 {
-                    Settings.SetValue(ConfigurationConstants.PackageSources, ConfigurationConstants.PackageSources, source.PackageSource.Source);
+                    Settings.SetItemInSection(ConfigurationConstants.PackageSources, source.PackageSource.AsSourceItem());
                 }
 
                 var token = CancellationToken.None;
