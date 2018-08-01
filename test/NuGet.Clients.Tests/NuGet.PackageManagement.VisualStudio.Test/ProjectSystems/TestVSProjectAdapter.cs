@@ -168,10 +168,7 @@ namespace NuGet.PackageManagement.VisualStudio.Test
             return Task.FromResult(new FrameworkName(_targetFrameworkString));
         }
 
-        public Task<string> GetNuGetLockFilePathAsync()
-        {
-            return null;
-        }
+        public Task<string> GetNuGetLockFilePathAsync() => Task.FromResult<string>(null);
 
         public Task<string[]> GetProjectTypeGuidsAsync()
         {
@@ -185,7 +182,7 @@ namespace NuGet.PackageManagement.VisualStudio.Test
 
         public Task<string> GetRestorePackagesWithLockFileAsync()
         {
-            return null;
+            return Task.FromResult<string>(null);
         }
 
         public Task<IEnumerable<RuntimeDescription>> GetRuntimeIdentifiersAsync()
@@ -205,7 +202,7 @@ namespace NuGet.PackageManagement.VisualStudio.Test
 
         public Task<bool> IsLockFileFreezeOnRestoreAsync()
         {
-            return null;
+            return Task.FromResult(false);
         }
     }
 }
