@@ -14,7 +14,7 @@ namespace NuGet.PackageManagement.VisualStudio
     [Export(typeof(Configuration.IMachineWideSettings))]
     public class VsMachineWideSettings : Configuration.IMachineWideSettings
     {
-        private readonly AsyncLazy<Configuration.Settings> _settings;
+        private readonly AsyncLazy<Configuration.ISettings> _settings;
 
         [ImportingConstructor]
         public VsMachineWideSettings(
@@ -26,7 +26,7 @@ namespace NuGet.PackageManagement.VisualStudio
                 throw new ArgumentNullException(nameof(serviceProvider));
             }
 
-            _settings = new AsyncLazy<Configuration.Settings>(async () =>
+            _settings = new AsyncLazy<Configuration.ISettings>(async () =>
                 {
                     await NuGetUIThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
@@ -44,6 +44,6 @@ namespace NuGet.PackageManagement.VisualStudio
                 ThreadHelper.JoinableTaskFactory);
         }
 
-        public Configuration.Settings Settings => NuGetUIThreadHelper.JoinableTaskFactory.Run(_settings.GetValueAsync);
+        public Configuration.ISettings Settings => NuGetUIThreadHelper.JoinableTaskFactory.Run(_settings.GetValueAsync);
     }
 }
