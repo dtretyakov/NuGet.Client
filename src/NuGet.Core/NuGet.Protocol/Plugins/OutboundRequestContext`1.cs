@@ -220,7 +220,7 @@ namespace NuGet.Protocol.Plugins
                         // Top-level exception handler for a worker pool thread.
                         try
                         {
-                            await _connection.MessageDispatcher.DispatchCancelAsync(_request, CancellationToken.None);
+                            await _connection.MessageDispatcher.DispatchCancelAsync(_request, CancellationToken.None).ConfigureAwait(false);
                         }
                         catch (Exception)
                         {

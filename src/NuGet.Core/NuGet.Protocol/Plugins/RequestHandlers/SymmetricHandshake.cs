@@ -120,19 +120,19 @@ namespace NuGet.Protocol.Plugins
             var response = await _connection.SendRequestAndReceiveResponseAsync<HandshakeRequest, HandshakeResponse>(
                 MessageMethod.Handshake,
                 _outboundHandshakeRequest,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             if (response != null && response.ResponseCode == MessageResponseCode.Success)
             {
                 if (IsSupportedVersion(response.ProtocolVersion))
                 {
-                    await _responseSentTaskCompletionSource.Task;
+                    await _responseSentTaskCompletionSource.Task.ConfigureAwait(false);
 
                     return response.ProtocolVersion;
                 }
             }
 
-            await _responseSentTaskCompletionSource.Task;
+            await _responseSentTaskCompletionSource.Task.ConfigureAwait(false);
 
             return null;
         }
@@ -200,7 +200,8 @@ namespace NuGet.Protocol.Plugins
             }
 
             await responseHandler.SendResponseAsync(request, response, cancellationToken)
-                .ContinueWith(task => _responseSentTaskCompletionSource.TrySetResult(0));
+                .ContinueWith(task => _responseSentTaskCompletionSource.TrySetResult(0))
+                .ConfigureAwait(false);
         }
 
         private bool IsSupportedVersion(SemanticVersion requestedProtocolVersion)

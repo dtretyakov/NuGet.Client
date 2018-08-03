@@ -108,7 +108,7 @@ namespace NuGet.Protocol.Core.Types
         /// <returns>PluginDiscoveryResults</returns>
         public async Task<IEnumerable<PluginDiscoveryResult>> FindAvailablePluginsAsync(CancellationToken cancellationToken)
         {
-            return await _discoverer.Value.DiscoverAsync(cancellationToken);
+            return await _discoverer.Value.DiscoverAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -133,13 +133,13 @@ namespace NuGet.Protocol.Core.Types
             // Fast path
             if (source.PackageSource.IsHttp && IsPluginPossiblyAvailable())
             {
-                var serviceIndex = await source.GetResourceAsync<ServiceIndexResourceV3>(cancellationToken);
+                var serviceIndex = await source.GetResourceAsync<ServiceIndexResourceV3>(cancellationToken).ConfigureAwait(false);
 
                 if (serviceIndex != null)
                 {
                     var serviceIndexJson = JObject.Parse(serviceIndex.Json);
 
-                    foreach (var result in await FindAvailablePluginsAsync(cancellationToken))
+                    foreach (var result in await FindAvailablePluginsAsync(cancellationToken).ConfigureAwait(false))
                     {
                         var pluginCreationResult = await TryCreatePluginAsync(
                             result,
@@ -147,7 +147,7 @@ namespace NuGet.Protocol.Core.Types
                             new PluginRequestKey(result.PluginFile.Path, source.PackageSource.Source),
                             source.PackageSource.Source,
                             serviceIndexJson,
-                            cancellationToken);
+                            cancellationToken).ConfigureAwait(false);
                         if (pluginCreationResult.Item1)
                         {
                             pluginCreationResults.Add(pluginCreationResult.Item2);
@@ -221,9 +221,9 @@ namespace NuGet.Protocol.Core.Types
                                 PluginConstants.PluginArguments,
                                 new RequestHandlers(),
                                 _connectionOptions,
-                                cancellationToken);
+                                cancellationToken).ConfigureAwait(false);
 
-                            var utilities = await PerformOneTimePluginInitializationAsync(plugin, cancellationToken);
+                            var utilities = await PerformOneTimePluginInitializationAsync(plugin, cancellationToken).ConfigureAwait(false);
 
                             // We still make the GetOperationClaims call even if we have the operation claims cached. This is a way to self-update the cache.
                             var operationClaims = await _pluginOperationClaims.GetOrAdd(
@@ -233,12 +233,12 @@ namespace NuGet.Protocol.Core.Types
                                        plugin,
                                        packageSourceRepository,
                                        serviceIndex,
-                                       cancellationToken))).Value;
+                                       cancellationToken))).Value.ConfigureAwait(false);
 
                             if (!EqualityUtility.SequenceEqualWithNullCheck(operationClaims, cacheEntry.OperationClaims))
                             {
                                 cacheEntry.OperationClaims = operationClaims;
-                                await cacheEntry.UpdateCacheFileAsync();
+                                await cacheEntry.UpdateCacheFileAsync().ConfigureAwait(false);
                             }
 
                             pluginCreationResult = new PluginCreationResult(
@@ -254,7 +254,7 @@ namespace NuGet.Protocol.Core.Types
                     return new Tuple<bool, PluginCreationResult>(pluginCreationResult != null, pluginCreationResult);
                 },
                 token: cancellationToken
-                );
+                ).ConfigureAwait(false);
         }
 
         private async Task<Lazy<IPluginMulticlientUtilities>> PerformOneTimePluginInitializationAsync(IPlugin plugin, CancellationToken cancellationToken)
@@ -270,12 +270,12 @@ namespace NuGet.Protocol.Core.Types
                     MessageMethod.MonitorNuGetProcessExit,
                     new MonitorNuGetProcessExitRequest(_currentProcessId.Value),
                     cancellationToken),
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             await utilities.Value.DoOncePerPluginLifetimeAsync(
                 MessageMethod.Initialize.ToString(),
                 () => InitializePluginAsync(plugin, _connectionOptions.RequestTimeout, cancellationToken),
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
             return utilities;
         }
 
@@ -320,7 +320,7 @@ namespace NuGet.Protocol.Core.Types
             var response = await plugin.Connection.SendRequestAndReceiveResponseAsync<GetOperationClaimsRequest, GetOperationClaimsResponse>(
                 MessageMethod.GetOperationClaims,
                 payload,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
             if (response == null)
             {
                 return Array.Empty<OperationClaim>();
@@ -364,7 +364,7 @@ namespace NuGet.Protocol.Core.Types
             var response = await plugin.Connection.SendRequestAndReceiveResponseAsync<InitializeRequest, InitializeResponse>(
                 MessageMethod.Initialize,
                 payload,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             if (response != null && response.ResponseCode != MessageResponseCode.Success)
             {

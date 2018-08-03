@@ -165,7 +165,7 @@ namespace NuGet.Protocol.Plugins
 
                 try
                 {
-                    ProtocolVersion = await symmetricHandshake.HandshakeAsync(cancellationToken);
+                    ProtocolVersion = await symmetricHandshake.HandshakeAsync(cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception)
                 {
@@ -215,7 +215,7 @@ namespace NuGet.Protocol.Plugins
                 throw new InvalidOperationException(Strings.Plugin_NotConnected);
             }
 
-            await _sender.SendAsync(message, cancellationToken);
+            await _sender.SendAsync(message, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>

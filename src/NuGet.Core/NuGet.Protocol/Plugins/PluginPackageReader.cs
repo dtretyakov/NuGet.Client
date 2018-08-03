@@ -108,7 +108,7 @@ namespace NuGet.Protocol.Plugins
                 p => new Lazy<Task<FileStreamCreator>>(
                     () => GetStreamInternalAsync(p, cancellationToken)));
 
-            await lazyCreator.Value;
+            await lazyCreator.Value.ConfigureAwait(false);
 
             if (lazyCreator.Value.Result == null)
             {
@@ -146,7 +146,7 @@ namespace NuGet.Protocol.Plugins
                 return _files;
             }
 
-            await _getFilesSemaphore.WaitAsync(cancellationToken);
+            await _getFilesSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
 
             try
             {
@@ -155,7 +155,7 @@ namespace NuGet.Protocol.Plugins
                     return _files;
                 }
 
-                _files = await GetFilesInternalAsync(cancellationToken);
+                _files = await GetFilesInternalAsync(cancellationToken).ConfigureAwait(false);
             }
             finally
             {
@@ -196,7 +196,7 @@ namespace NuGet.Protocol.Plugins
                 throw new ArgumentNullException(nameof(folder));
             }
 
-            var files = await GetFilesAsync(cancellationToken);
+            var files = await GetFilesAsync(cancellationToken).ConfigureAwait(false);
 
             return files.Where(f => f.StartsWith(folder + "/", StringComparison.OrdinalIgnoreCase));
         }
@@ -268,7 +268,7 @@ namespace NuGet.Protocol.Plugins
                 return Enumerable.Empty<string>();
             }
 
-            // Normalized destination path 
+            // Normalized destination path
             var normalizedDestination = NormalizeDirectoryPath(destination);
 
             ValidatePackageEntries(normalizedDestination, packageFiles, _packageIdentity);
@@ -284,7 +284,7 @@ namespace NuGet.Protocol.Plugins
             var response = await _plugin.Connection.SendRequestAndReceiveResponseAsync<CopyFilesInPackageRequest, CopyFilesInPackageResponse>(
                 MessageMethod.CopyFilesInPackage,
                 request,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             if (response != null)
             {
@@ -338,7 +338,7 @@ namespace NuGet.Protocol.Plugins
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var nuspecReader = await GetNuspecReaderAsync(cancellationToken);
+            var nuspecReader = await GetNuspecReaderAsync(cancellationToken).ConfigureAwait(false);
 
             return nuspecReader.GetIdentity();
         }
@@ -366,7 +366,7 @@ namespace NuGet.Protocol.Plugins
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var nuspecReader = await GetNuspecReaderAsync(cancellationToken);
+            var nuspecReader = await GetNuspecReaderAsync(cancellationToken).ConfigureAwait(false);
 
             return nuspecReader.GetMinClientVersion();
         }
@@ -395,7 +395,7 @@ namespace NuGet.Protocol.Plugins
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var nuspecReader = await GetNuspecReaderAsync(cancellationToken);
+            var nuspecReader = await GetNuspecReaderAsync(cancellationToken).ConfigureAwait(false);
 
             return nuspecReader.GetPackageTypes();
         }
@@ -422,9 +422,9 @@ namespace NuGet.Protocol.Plugins
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var nuspecFile = await GetNuspecFileAsync(cancellationToken);
+            var nuspecFile = await GetNuspecFileAsync(cancellationToken).ConfigureAwait(false);
 
-            return await GetStreamAsync(nuspecFile, cancellationToken);
+            return await GetStreamAsync(nuspecFile, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -449,7 +449,7 @@ namespace NuGet.Protocol.Plugins
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var files = await GetFilesAsync(cancellationToken);
+            var files = await GetFilesAsync(cancellationToken).ConfigureAwait(false);
 
             return GetNuspecFile(files);
         }
@@ -476,7 +476,7 @@ namespace NuGet.Protocol.Plugins
                 return _nuspecReader;
             }
 
-            await _getNuspecReaderSemaphore.WaitAsync(cancellationToken);
+            await _getNuspecReaderSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
 
             try
             {
@@ -485,7 +485,7 @@ namespace NuGet.Protocol.Plugins
                     return _nuspecReader;
                 }
 
-                var stream = await GetNuspecAsync(cancellationToken);
+                var stream = await GetNuspecAsync(cancellationToken).ConfigureAwait(false);
 
                 _nuspecReader = new NuspecReader(stream);
             }
@@ -523,15 +523,15 @@ namespace NuGet.Protocol.Plugins
 
             var frameworks = new HashSet<NuGetFramework>(new NuGetFrameworkFullComparer());
 
-            frameworks.UnionWith((await GetLibItemsAsync(cancellationToken)).Select(g => g.TargetFramework));
+            frameworks.UnionWith((await GetLibItemsAsync(cancellationToken).ConfigureAwait(false)).Select(g => g.TargetFramework));
 
-            frameworks.UnionWith((await GetBuildItemsAsync(cancellationToken)).Select(g => g.TargetFramework));
+            frameworks.UnionWith((await GetBuildItemsAsync(cancellationToken).ConfigureAwait(false)).Select(g => g.TargetFramework));
 
-            frameworks.UnionWith((await GetContentItemsAsync(cancellationToken)).Select(g => g.TargetFramework));
+            frameworks.UnionWith((await GetContentItemsAsync(cancellationToken).ConfigureAwait(false)).Select(g => g.TargetFramework));
 
-            frameworks.UnionWith((await GetToolItemsAsync(cancellationToken)).Select(g => g.TargetFramework));
+            frameworks.UnionWith((await GetToolItemsAsync(cancellationToken).ConfigureAwait(false)).Select(g => g.TargetFramework));
 
-            frameworks.UnionWith((await GetFrameworkItemsAsync(cancellationToken)).Select(g => g.TargetFramework));
+            frameworks.UnionWith((await GetFrameworkItemsAsync(cancellationToken).ConfigureAwait(false)).Select(g => g.TargetFramework));
 
             return frameworks.Where(f => !f.IsUnsupported).OrderBy(f => f, new NuGetFrameworkSorter());
         }
@@ -560,7 +560,7 @@ namespace NuGet.Protocol.Plugins
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var nuspecReader = await GetNuspecReaderAsync(cancellationToken);
+            var nuspecReader = await GetNuspecReaderAsync(cancellationToken).ConfigureAwait(false);
 
             return nuspecReader.GetFrameworkReferenceGroups();
         }
@@ -587,7 +587,7 @@ namespace NuGet.Protocol.Plugins
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var nuspecReader = await GetNuspecReaderAsync(cancellationToken);
+            var nuspecReader = await GetNuspecReaderAsync(cancellationToken).ConfigureAwait(false);
 
             return nuspecReader.IsServiceable();
         }
@@ -616,12 +616,12 @@ namespace NuGet.Protocol.Plugins
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var nuspecReader = await GetNuspecReaderAsync(cancellationToken);
+            var nuspecReader = await GetNuspecReaderAsync(cancellationToken).ConfigureAwait(false);
             var id = nuspecReader.GetIdentity().Id;
 
             var results = new List<FrameworkSpecificGroup>();
 
-            foreach (var group in await GetFileGroupsAsync(PackagingConstants.Folders.Build, cancellationToken))
+            foreach (var group in await GetFileGroupsAsync(PackagingConstants.Folders.Build, cancellationToken).ConfigureAwait(false))
             {
                 var filteredGroup = group;
 
@@ -760,7 +760,7 @@ namespace NuGet.Protocol.Plugins
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var nuspecReader = await GetNuspecReaderAsync(cancellationToken);
+            var nuspecReader = await GetNuspecReaderAsync(cancellationToken).ConfigureAwait(false);
 
             return nuspecReader.GetDependencyGroups();
         }
@@ -814,12 +814,12 @@ namespace NuGet.Protocol.Plugins
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var nuspecReader = await GetNuspecReaderAsync(cancellationToken);
+            var nuspecReader = await GetNuspecReaderAsync(cancellationToken).ConfigureAwait(false);
             var referenceGroups = nuspecReader.GetReferenceGroups();
             var fileGroups = new List<FrameworkSpecificGroup>();
 
             // filter out non reference assemblies
-            foreach (var group in await GetLibItemsAsync(cancellationToken))
+            foreach (var group in await GetLibItemsAsync(cancellationToken).ConfigureAwait(false))
             {
                 fileGroups.Add(new FrameworkSpecificGroup(group.TargetFramework, group.Items.Where(e => IsReferenceAssembly(e))));
             }
@@ -903,7 +903,7 @@ namespace NuGet.Protocol.Plugins
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var nuspecReader = await GetNuspecReaderAsync(cancellationToken);
+            var nuspecReader = await GetNuspecReaderAsync(cancellationToken).ConfigureAwait(false);
 
             return nuspecReader.GetDevelopmentDependency();
         }
@@ -940,7 +940,7 @@ namespace NuGet.Protocol.Plugins
             var response = await _plugin.Connection.SendRequestAndReceiveResponseAsync<CopyNupkgFileRequest, CopyNupkgFileResponse>(
                 MessageMethod.CopyNupkgFile,
                 request,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             if (response != null)
             {
@@ -1003,7 +1003,7 @@ namespace NuGet.Protocol.Plugins
             var isContentFolder = StringComparer.OrdinalIgnoreCase.Equals(folder, PackagingConstants.Folders.Content);
             var allowSubFolders = true;
 
-            foreach (var path in await GetFilesAsync(folder, cancellationToken))
+            foreach (var path in await GetFilesAsync(folder, cancellationToken).ConfigureAwait(false))
             {
                 // Use the known framework or if the folder did not parse, use the Any framework and consider it a sub folder
                 var framework = GetFrameworkFromPath(path, allowSubFolders);
@@ -1040,7 +1040,7 @@ namespace NuGet.Protocol.Plugins
             var response = await _plugin.Connection.SendRequestAndReceiveResponseAsync<CopyFilesInPackageRequest, CopyFilesInPackageResponse>(
                 MessageMethod.CopyFilesInPackage,
                 payload,
-                CancellationToken.None);
+                CancellationToken.None).ConfigureAwait(false);
 
             if (response != null)
             {
@@ -1079,7 +1079,7 @@ namespace NuGet.Protocol.Plugins
             var response = await _plugin.Connection.SendRequestAndReceiveResponseAsync<GetFilesInPackageRequest, GetFilesInPackageResponse>(
                 MessageMethod.GetFilesInPackage,
                 request,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             if (response != null)
             {

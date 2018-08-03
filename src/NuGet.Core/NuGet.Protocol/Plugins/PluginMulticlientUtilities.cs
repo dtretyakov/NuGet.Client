@@ -55,7 +55,7 @@ namespace NuGet.Protocol.Plugins
 
             var lazyTask = _actions.GetOrAdd(key, _ => new Lazy<Task>(() => taskFunc()));
 
-            await lazyTask.Value;
+            await lazyTask.Value.ConfigureAwait(false);
         }
     }
 }

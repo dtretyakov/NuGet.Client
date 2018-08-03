@@ -151,7 +151,7 @@ namespace NuGet.Protocol.Plugins
                     credential = await GetCredentialAsync(
                         packageSource,
                         requestPayload.StatusCode,
-                        cancellationToken);
+                        cancellationToken).ConfigureAwait(false);
                 }
 
                 if (credential == null)
@@ -177,7 +177,7 @@ namespace NuGet.Protocol.Plugins
                     password: null);
             }
 
-            await responseHandler.SendResponseAsync(request, responsePayload, cancellationToken);
+            await responseHandler.SendResponseAsync(request, responsePayload, cancellationToken).ConfigureAwait(false);
         }
 
         private async Task<NetworkCredential> GetCredentialAsync(
@@ -189,10 +189,10 @@ namespace NuGet.Protocol.Plugins
 
             if (requestType == CredentialRequestType.Proxy)
             {
-                return await GetProxyCredentialAsync(packageSource, cancellationToken);
+                return await GetProxyCredentialAsync(packageSource, cancellationToken).ConfigureAwait(false);
             }
 
-            return await GetPackageSourceCredential(requestType, packageSource, cancellationToken);
+            return await GetPackageSourceCredential(requestType, packageSource, cancellationToken).ConfigureAwait(false);
         }
 
         private async Task<NetworkCredential> GetPackageSourceCredential(
@@ -232,7 +232,7 @@ namespace NuGet.Protocol.Plugins
                 _proxy,
                 requestType,
                 message,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             return credentials?.GetCredential(sourceUri, authType: null);
         }
@@ -254,7 +254,7 @@ namespace NuGet.Protocol.Plugins
                     _proxy,
                     CredentialRequestType.Proxy,
                     message,
-                    cancellationToken);
+                    cancellationToken).ConfigureAwait(false);
 
                 return proxyCredentials?.GetCredential(proxyUri, _basicAuthenticationType);
             }

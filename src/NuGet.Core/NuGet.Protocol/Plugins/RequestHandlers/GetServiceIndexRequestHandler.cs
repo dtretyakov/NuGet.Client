@@ -122,7 +122,8 @@ namespace NuGet.Protocol.Plugins
 
             if (_repositories.TryGetValue(getRequest.PackageSourceRepository, out sourceRepository))
             {
-                serviceIndex = await sourceRepository.GetResourceAsync<ServiceIndexResourceV3>(cancellationToken);
+                serviceIndex = await sourceRepository.GetResourceAsync<ServiceIndexResourceV3>(cancellationToken)
+                    .ConfigureAwait(false);
             }
 
             if (serviceIndex == null)
@@ -136,7 +137,7 @@ namespace NuGet.Protocol.Plugins
                 responsePayload = new GetServiceIndexResponse(MessageResponseCode.Success, serviceIndexJson);
             }
 
-            await responseHandler.SendResponseAsync(request, responsePayload, cancellationToken);
+            await responseHandler.SendResponseAsync(request, responsePayload, cancellationToken).ConfigureAwait(false);
         }
     }
 }

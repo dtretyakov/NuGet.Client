@@ -118,7 +118,7 @@ namespace NuGet.Protocol.Plugins
                     // Top-level exception handler for a worker pool thread.
                     try
                     {
-                        await _connection.SendAsync(response, _cancellationToken);
+                        await _connection.SendAsync(response, _cancellationToken).ConfigureAwait(false);
                     }
                     catch (Exception)
                     {
@@ -168,13 +168,13 @@ namespace NuGet.Protocol.Plugins
                             _connection,
                             request,
                             responseHandler,
-                            _cancellationToken);
+                            _cancellationToken).ConfigureAwait(false);
                     }
                     catch (OperationCanceledException) when (_cancellationToken.IsCancellationRequested)
                     {
                         var response = MessageUtilities.Create(request.RequestId, MessageType.Cancel, request.Method);
 
-                        await _connection.SendAsync(response, CancellationToken.None);
+                        await _connection.SendAsync(response, CancellationToken.None).ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {

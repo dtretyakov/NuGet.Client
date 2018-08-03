@@ -119,7 +119,7 @@ namespace NuGet.Protocol.Plugins
 
             var response = new MonitorNuGetProcessExitResponse(responseCode);
 
-            await responseHandler.SendResponseAsync(request, response, cancellationToken);
+            await responseHandler.SendResponseAsync(request, response, cancellationToken).ConfigureAwait(false);
         }
 
         private void OnProcessExited(object sender, EventArgs e)

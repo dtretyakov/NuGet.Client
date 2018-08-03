@@ -77,7 +77,7 @@ namespace NuGet.Protocol.Plugins
                 return _results;
             }
 
-            await _semaphore.WaitAsync(cancellationToken);
+            await _semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
 
             try
             {

@@ -60,7 +60,7 @@ namespace NuGet.Protocol.Core.Types
 
             PluginResource resource = null;
 
-            var pluginCreationResults = await _pluginManager.CreatePluginsAsync(source, cancellationToken);
+            var pluginCreationResults = await _pluginManager.CreatePluginsAsync(source, cancellationToken).ConfigureAwait(false);
 
             if (pluginCreationResults != null && pluginCreationResults.Any())
             {

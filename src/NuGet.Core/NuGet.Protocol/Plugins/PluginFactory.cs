@@ -131,7 +131,7 @@ namespace NuGet.Protocol.Plugins
                 (path) => new Lazy<Task<IPlugin>>(
                     () => CreatePluginAsync(filePath, arguments, requestHandlers, options, sessionCancellationToken)));
 
-            await lazyTask.Value;
+            await lazyTask.Value.ConfigureAwait(false);
 
             // Manage plugin lifetime by its idleness.  Thus, don't allow callers to prematurely dispose of a plugin.
             return new NoOpDisposePlugin(lazyTask.Value.Result);
@@ -186,7 +186,7 @@ namespace NuGet.Protocol.Plugins
                 // Wire up handlers before calling ConnectAsync(...).
                 RegisterEventHandlers(plugin);
 
-                await connection.ConnectAsync(sessionCancellationToken);
+                await connection.ConnectAsync(sessionCancellationToken).ConfigureAwait(false);
 
                 process.EnableRaisingEvents = true;
             }
@@ -263,7 +263,7 @@ namespace NuGet.Protocol.Plugins
 
             try
             {
-                await connection.ConnectAsync(sessionCancellationToken);
+                await connection.ConnectAsync(sessionCancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {

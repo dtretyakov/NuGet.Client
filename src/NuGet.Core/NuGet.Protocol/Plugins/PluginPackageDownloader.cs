@@ -154,11 +154,11 @@ namespace NuGet.Protocol.Plugins
 
             try
             {
-                filePath = await _packageReader.CopyNupkgAsync(destinationFilePath, cancellationToken);
+                filePath = await _packageReader.CopyNupkgAsync(destinationFilePath, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                if (!await _handleExceptionAsync(ex))
+                if (!await _handleExceptionAsync(ex).ConfigureAwait(false))
                 {
                     throw;
                 }
@@ -200,7 +200,7 @@ namespace NuGet.Protocol.Plugins
             var response = await _plugin.Connection.SendRequestAndReceiveResponseAsync<GetPackageHashRequest, GetPackageHashResponse>(
                 MessageMethod.GetPackageHash,
                 request,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             if (response != null && response.ResponseCode == MessageResponseCode.Success)
             {

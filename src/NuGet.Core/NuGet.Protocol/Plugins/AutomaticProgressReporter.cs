@@ -178,7 +178,7 @@ namespace NuGet.Protocol.Plugins
                             _request.Method,
                             new Progress());
 
-                        await _connection.SendAsync(progress, _cancellationToken);
+                        await _connection.SendAsync(progress, _cancellationToken).ConfigureAwait(false);
                     }
                     catch (Exception)
                     {

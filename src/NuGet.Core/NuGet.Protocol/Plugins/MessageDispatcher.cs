@@ -358,7 +358,7 @@ namespace NuGet.Protocol.Plugins
 
             try
             {
-                await connection.SendAsync(message, cancellationToken);
+                await connection.SendAsync(message, cancellationToken).ConfigureAwait(false);
             }
             finally
             {
@@ -373,7 +373,7 @@ namespace NuGet.Protocol.Plugins
         {
             var message = new Message(request.RequestId, MessageType.Cancel, request.Method);
 
-            await DispatchWithExistingContextAsync(connection, message, cancellationToken);
+            await DispatchWithExistingContextAsync(connection, message, cancellationToken).ConfigureAwait(false);
         }
 
         private async Task DispatchFaultAsync(
@@ -392,13 +392,13 @@ namespace NuGet.Protocol.Plugins
 
                 message = new Message(requestId, MessageType.Fault, MessageMethod.None, jsonPayload);
 
-                await connection.SendAsync(message, cancellationToken);
+                await connection.SendAsync(message, cancellationToken).ConfigureAwait(false);
             }
             else
             {
                 message = new Message(request.RequestId, MessageType.Fault, request.Method, jsonPayload);
 
-                await DispatchWithExistingContextAsync(connection, message, cancellationToken);
+                await DispatchWithExistingContextAsync(connection, message, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -410,7 +410,7 @@ namespace NuGet.Protocol.Plugins
         {
             var message = MessageUtilities.Create(request.RequestId, MessageType.Progress, request.Method, progress);
 
-            await DispatchWithExistingContextAsync(connection, message, cancellationToken);
+            await DispatchWithExistingContextAsync(connection, message, cancellationToken).ConfigureAwait(false);
         }
 
         private async Task DispatchWithExistingContextAsync(
@@ -420,7 +420,7 @@ namespace NuGet.Protocol.Plugins
         {
             var requestContext = GetOutboundRequestContext(response.RequestId);
 
-            await connection.SendAsync(response, cancellationToken);
+            await connection.SendAsync(response, cancellationToken).ConfigureAwait(false);
         }
 
         private async Task<TIncoming> DispatchWithNewContextAsync<TOutgoing, TIncoming>(
@@ -452,9 +452,9 @@ namespace NuGet.Protocol.Plugins
 
                     try
                     {
-                        await connection.SendAsync(message, requestContext.CancellationToken);
+                        await connection.SendAsync(message, requestContext.CancellationToken).ConfigureAwait(false);
 
-                        return await requestContext.CompletionTask;
+                        return await requestContext.CompletionTask.ConfigureAwait(false);
                     }
                     catch (OperationCanceledException) when (requestContext.CancellationToken.IsCancellationRequested)
                     {

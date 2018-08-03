@@ -39,7 +39,7 @@ namespace NuGet.Protocol.Plugins
 
         /// <summary>
         /// Loads and processes the contet from the generated file if it exists.
-        /// Even after this method is invoked, the operation claims might be null. 
+        /// Even after this method is invoked, the operation claims might be null.
         /// </summary>
         public void LoadFromFile()
         {
@@ -91,7 +91,7 @@ namespace NuGet.Protocol.Plugins
                     useAsync: true))
                 {
                     var json = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(OperationClaims, Formatting.Indented));
-                    await fileStream.WriteAsync(json, 0, json.Length);
+                    await fileStream.WriteAsync(json, 0, json.Length).ConfigureAwait(false);
                 }
 
                 if (File.Exists(CacheFileName))
